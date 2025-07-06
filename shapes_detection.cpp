@@ -1,29 +1,47 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <numeric>
 
 #define COR std::vector<std::vector<cv::Point>> 
 
 cv::Mat imgGray, imgDil, imgCanny, imgBlur;
 
-int is_circle(COR contours, COR tempContours, int i)
+int is_circle(std::vector<std::vector<cv::Point>> &contours, int i, double tolerance = 5.0, double matchRatio = 0.9)
 {
-    int         edgePointCount;
-    int         lineCount;
-    cv::Moments M;
+    if (contours[i].empty())
+        return 0;
 
-    edgePointCount = tempContours[i].size();
-    M = cv::moments(contours[i]);
+    if (contours[i].size() < 80)
+        return 0;
+    std::vector<cv::Point> approx;
+    cv::approxPolyDP(contours[i], approx, 0.01 * cv::arcLength(contours[i], true), true);
+
+    if (approx.size() <= 8)
+        return 0;
+
+    cv::Moments M = cv::moments(contours[i]);
     if (M.m00 == 0)
-        return (1);
-    cv::Point center(M.m10 / M.m00, M.m01 / M.m00);
-    lineCount = 0;
-    for (const cv::Point& pt : contours[i])
-        lineCount++;
-    if ((lineCount) > edgePointCount * 0.4)
-        return (3);
-    return(0);
+        return 0;
+    cv::Point2f center(M.m10 / M.m00, M.m01 / M.m00);
+
+    std::vector<double> distances;
+    for (const auto& pt : contours[i])
+        distances.push_back(cv::norm(center - cv::Point2f(static_cast<float>(pt.x), static_cast<float>(pt.y))));
+
+    double avg = std::accumulate(distances.begin(), distances.end(), 0.0) / distances.size();
+
+    int closeCount = 0;
+    for (double d : distances)
+        if (std::abs(d - avg) < tolerance)
+            closeCount++;
+
+    double ratio = (double)closeCount / distances.size();
+    if (ratio >= matchRatio)
+        return 3;
+    return 0;
 }
+
 
 int is_Square(std::vector<cv::Rect> boundingRect, int i)
 {
@@ -57,7 +75,7 @@ int    which_shape(COR conPloy, std::vector<cv::Rect> boundingRect, int i, std::
         objType = "Heptagon";
     else if (objCor > 7) 
     {
-        ret = is_circle(contours, tempContours, i);
+        ret = is_circle(contours, i);
         if (ret == 1)
             return (1);
         if (ret == 3)
@@ -99,9 +117,9 @@ void getContours(cv::Mat imgDil, cv::Mat img)
 
 }
 
-void    image_process(cv::Mat &img)
+void    image_process(cv::Mat &img, float resizeX, float resizeY)
 {
-    cv::resize(img, img, cv::Size(), 0.5, 0.5);
+    cv::resize(img, img, cv::Size(), resizeX, resizeY);
     std::cout<< img.size() << std::endl; 
     cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
     cv::GaussianBlur(imgGray, imgBlur, cv::Size(3,3), 3, 0);
@@ -110,16 +128,54 @@ void    image_process(cv::Mat &img)
     cv::dilate(imgCanny, imgDil, kernel);
 }
 
-int main(int argc, char** argv)
+int parsing(int argc, char** argv, float &resizeX, float &resizeY)
 {
-    if (argc < 2)
+    if (argc < 2 || argc > 4)
     {
-        std::cerr << "Usage: " << argv[0] << " <image_path>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <image_path> <resize_y> <resize_x>" << std::endl;
+        std::cerr << "optional <resize_y> <resize_x>" << std::endl;
         return (1);
     }
+    else if (argc == 3)
+    {
+        resizeX = atof(argv[2]);
+        if (resizeX < 0.1 || resizeX > 10.0)
+        {
+            std::cerr << "Resize value must be a positive float between 0.1 to 10.0." << std::endl;
+            return (1);
+        }
+        resizeY = resizeX;
+    }
+    else if (argc == 4)
+    {
+        resizeX = atof(argv[2]);
+        resizeY = atof(argv[3]);
+        if (resizeX < 0.1 || resizeX > 10.0
+            || resizeY < 0.1 || resizeY > 10.0)
+        {
+            std::cerr << "Resize values must be positive integers between 0.1 to 10.0." << std::endl;
+            return (1);
+        }
+    }
+    else
+    {
+        resizeX = 1;
+        resizeY = 1;
+    }
+    return (0);
+}
+
+int main(int argc, char** argv)
+{
+    float   resizeX;
+    float   resizeY;
+
+    if (parsing(argc, argv, resizeX, resizeY))
+        return (1);
+    std::cout << "Resize values: " << resizeX << ", " << resizeY << std::endl;
     std::string imagePath = argv[1];
     cv::Mat img = cv::imread(imagePath);
-    image_process(img);
+    image_process(img, resizeX, resizeY);
     getContours(imgDil, img);   
     cv::imshow("image Dil",  img);
     cv::waitKey(0);
