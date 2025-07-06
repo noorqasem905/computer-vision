@@ -93,8 +93,9 @@ Make sure OpenCV is installed and `pkg-config` is available.
 
 ## ▶️ How to Run
 
-1. Clone the repository and place your shape image at `resours/shape5.png`
+1. Clone the repository and ensure your image file (e.g. `shape5.png`) is available.
 2. Compile using:
 
 ```bash
 g++ main.cpp -o shape_detection `pkg-config --cflags --libs opencv4`
+./shape_detection image
