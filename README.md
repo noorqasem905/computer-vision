@@ -1,4 +1,4 @@
-# computer-vision
+# shapes_detection
 
 ---
 
