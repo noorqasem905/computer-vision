@@ -110,9 +110,15 @@ void    image_process(cv::Mat &img)
     cv::dilate(imgCanny, imgDil, kernel);
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    cv::Mat img = cv::imread("resours/shape5.png");
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " <image_path>" << std::endl;
+        return (1);
+    }
+    std::string imagePath = argv[1];
+    cv::Mat img = cv::imread(imagePath);
     image_process(img);
     getContours(imgDil, img);   
     cv::imshow("image Dil",  img);
