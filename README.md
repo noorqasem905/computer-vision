@@ -94,7 +94,16 @@ Make sure OpenCV is installed and `pkg-config` is available.
 ## ▶️ How to Run
 
 1. Clone the repository and ensure your image file (e.g. `shape5.png`) is available.
-2. Compile using:
+2. Run the program with optional resize values:
+
+# Basic usage (no resizing):
+./shape_detection image.png
+
+# Resize image to 0.5x:
+./shape_detection image.png 0.5
+
+# Resize image width by 0.7 and height by 0.3:
+./qq image.png 0.7 0.3
 
 ```bash
 g++ main.cpp -o shape_detection `pkg-config --cflags --libs opencv4`
