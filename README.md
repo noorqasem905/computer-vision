@@ -108,5 +108,5 @@ g++ main.cpp -o shape_detection `pkg-config --cflags --libs opencv4`
 
 # Resize width to 0.7 (70%) and height to 0.3 (30%):
 ./shape_detection image.png 0.7 0.3
-
+```
 © 2025 NoorQASEm. All rights reserved.
