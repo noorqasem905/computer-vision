@@ -7,13 +7,13 @@
 
 cv::Mat imgGray, imgDil, imgCanny, imgBlur;
 
-int is_circle(std::vector<std::vector<cv::Point>> &contours, int i, double tolerance = 5.0, double matchRatio = 0.9)
+int is_circle(std::vector<std::vector<cv::Point>> &contours, int i, double tolerance = 3.0, double matchRatio = 0.9)
 {
     if (contours[i].empty())
         return 0;
 
-    if (contours[i].size() < 80)
-        return 0;
+/*     if (contours[i].size() < 50)
+        return 0; */
     std::vector<cv::Point> approx;
     cv::approxPolyDP(contours[i], approx, 0.01 * cv::arcLength(contours[i], true), true);
 
@@ -42,7 +42,6 @@ int is_circle(std::vector<std::vector<cv::Point>> &contours, int i, double toler
     return 0;
 }
 
-
 int is_Square(std::vector<cv::Rect> boundingRect, int i)
 {
     float aspRatio;
@@ -53,7 +52,7 @@ int is_Square(std::vector<cv::Rect> boundingRect, int i)
     return (0);
 }
 
-int    which_shape(COR conPloy, std::vector<cv::Rect> boundingRect, int i, std::string& objType, 
+int which_shape(COR conPloy, std::vector<cv::Rect> boundingRect, int i, std::string& objType, 
                     COR contours, COR tempContours)
 {
     int     objCor;
@@ -122,7 +121,7 @@ void    image_process(cv::Mat &img, float resizeX, float resizeY)
     cv::resize(img, img, cv::Size(), resizeX, resizeY);
     std::cout<< img.size() << std::endl; 
     cv::cvtColor(img, imgGray, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(imgGray, imgBlur, cv::Size(3,3), 3, 0);
+    cv::medianBlur(imgGray, imgBlur, 5);
     cv::Canny(imgBlur, imgCanny, 15, 55);
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
     cv::dilate(imgCanny, imgDil, kernel);
